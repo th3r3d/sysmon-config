@@ -1,0 +1,46 @@
+###### start of config file ############
+##   See the nxlog reference manual at
+##   http://nxlog-ce.sourceforge.net/nxlog-docs/en/nxlog-reference-manual.pdf
+
+define ROOT C:\Program Files (x86)\nxlog
+Moduledir %ROOT%\modules
+CacheDir %ROOT%\data
+Pidfile %ROOT%\data\nxlog.pid
+SpoolDir %ROOT%\data
+LogFile %ROOT%\data\nxlog.log
+
+<Extension json>
+    Module      xm_json
+</Extension>
+
+# ref https://msdn.microsoft.com/en-us/library/aa385231.aspx 
+# had to add tag into query tag and change " for '
+
+<Input in>
+    Module      im_msvistalog
+Query   <QueryList>\
+    <Query Id='0' Path='Microsoft-Windows-Sysmon/Operational'>\
+     <Select Path='Microsoft-Windows-Sysmon/Operational'>*</Select>\
+    </Query>\
+</QueryList>
+
+# Exec if ($TargetUserName == ’SYSTEM’) OR ($EventType == ’VERBOSE’) drop(); #incase you want to filter at later date
+Exec $raw_event = to_json(); #keeps event on one line
+
+</Input>
+
+<Output out>
+    Module      om_udp
+    Host        x.x.x.x
+    Port        514
+</Output>
+
+<Output outf> #useful for testing
+    Module      om_file
+    file "C:\logs\nxlog_output.txt"
+</Output>
+
+<Route 1>
+    Path        in => out
+</Route>
+###### end of config file ############
